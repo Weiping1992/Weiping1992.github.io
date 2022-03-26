@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>初识systemd | 渭平&#39;s Blog</title>
+  <meta name="description" content="systemd在Linux系统中有个1号（PID:1）进程，它是第一个用户空间中的进程，也称为初始化(init)进程。它有两个职责：一是执行初始化任务，它负责启动系统中的其他进程，它承担了这些进程的父进程或者祖先进程的角色；另一个职责就是进入无限等待直到系统关闭，所以也承担系统级的控制任务。 这个1号进程有3种主流（或曾经主流）的实现方式：SysV init, Upstart和systemd。在R">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初识systemd">
+<meta property="og:url" content="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/index.html">
+<meta property="og:site_name" content="做大梦的程二千">
+<meta property="og:description" content="systemd在Linux系统中有个1号（PID:1）进程，它是第一个用户空间中的进程，也称为初始化(init)进程。它有两个职责：一是执行初始化任务，它负责启动系统中的其他进程，它承担了这些进程的父进程或者祖先进程的角色；另一个职责就是进入无限等待直到系统关闭，所以也承担系统级的控制任务。 这个1号进程有3种主流（或曾经主流）的实现方式：SysV init, Upstart和systemd。在R">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/1920px-Systemd_components.svg.png">
+<meta property="og:image" content="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/1_sysvinit.png">
+<meta property="og:image" content="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/2_systemd.png">
+<meta property="article:published_time" content="2022-03-26T12:20:28.000Z">
+<meta property="article:modified_time" content="2022-03-26T13:36:01.787Z">
+<meta property="article:author" content="程二千">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/1920px-Systemd_components.svg.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="做大梦的程二千" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitment@0.0.3/style/default.min.css">
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/weiping1992" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar_mario.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">渭平</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">正在学炒股的咖啡爱好者</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Nanjing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/weiping1992" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>只有坚持才能看到希望，而不是看到希望才去坚持！</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%98%85%E8%AF%BB/">阅读</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Linux/" style="font-size: 13px;">Linux</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13px;">读书</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/03/">三月 2022</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled ">
+        
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/Linux/">Linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/" class="title">初识systemd</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-03-26T12:20:28.000Z" itemprop="datePublished">2022-03-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/03/13/%E8%AF%BB%E3%80%8A%E7%BD%AE%E8%BA%AB%E4%BA%8B%E5%86%85%E3%80%8B/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E9%98%85%E8%AF%BB/">阅读</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/03/13/%E8%AF%BB%E3%80%8A%E7%BD%AE%E8%BA%AB%E4%BA%8B%E5%86%85%E3%80%8B/" class="title">读《置身事内》</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-03-13T13:22:42.000Z" itemprop="datePublished">2022-03-13</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-初识systemd" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      初识systemd
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/" class="article-date">
+	  <time datetime="2022-03-26T12:20:28.000Z" itemprop="datePublished">2022-03-26</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/Linux/">Linux</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/Linux/" rel="tag">Linux</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 3.1k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 12(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="systemd"><a href="#systemd" class="headerlink" title="systemd"></a>systemd</h1><p>在Linux系统中有个1号（PID:1）进程，它是第一个用户空间中的进程，也称为初始化(init)进程。它有两个职责：一是执行初始化任务，它负责启动系统中的其他进程，它承担了这些进程的父进程或者祖先进程的角色；另一个职责就是进入无限等待直到系统关闭，所以也承担系统级的控制任务。</p>
+<p>这个1号进程有3种主流（或曾经主流）的实现方式：SysV init, Upstart和systemd。在RHEL5及以前的版本中使用的SysV init，这是一种历史悠久的初始化进程，由Unix系统发展而来，也是许多有经验的程序员最熟悉的方式。在RHEL6中开始使用的Upstart，由ubuntu开发，特点是基于事件（event）机制来解决启动程序之间的依赖关系。Upstart最终昙花一现，在RHEL7中被systemd替代。systemd由Lennart Poettering开发，现已经是各大主流Linux发行版（如RHEL、Debian、Ubuntu、ArchLinux、OpenSUSE等）默认的初始化程序。</p>
+<h2 id="systemd的特点"><a href="#systemd的特点" class="headerlink" title="systemd的特点"></a>systemd的特点</h2><p>相比于SysV init和Upstart，systemd具有以下突出的优点：</p>
+<ol>
+<li>得益于并行启动和按需启动机制，systemd拥有更快的启动速度；</li>
+<li>拥有丰富的工具集，提供全面的系统管理能力（例如：机器名、时间、挂载、计划任务等等）；</li>
+<li>拥有手术刀般精细化的服务管理能力，能精确控制服务的运行环境和资源；</li>
+<li>强大的日志管理能力，能够防止日志被篡改。</li>
+</ol>
+<h2 id="常见工具及命令"><a href="#常见工具及命令" class="headerlink" title="常见工具及命令"></a>常见工具及命令</h2><p>正如上面的描述，systemd拥有一个强大而丰富的工具箱，如下图所示：</p>
+<p><img src="1920px-Systemd_components.svg.png" alt="1920px-Systemd_components.svg"></p>
+<p>先来看看一些工具的使用：</p>
+<h3 id="systemctl"><a href="#systemctl" class="headerlink" title="systemctl"></a>systemctl</h3><p>systemctl是systemd中非常重要的工具，用于控制系统和管理服务。</p>
+<p>基于systemctl可以实现关机重启等操作：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 重启系统</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl reboot</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 关闭系统</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl poweroff</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> CPU停止工作</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl halt</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 暂停系统</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl <span class="built_in">suspend</span></span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 休眠系统</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl hibernate</span></span><br></pre></td></tr></table></figure>
+
+<p>后面会介绍在systemd中被管理的对象叫做unit。以sshd.service为例，使用systemctl可以设置sshd服务的启动停止和开机自启等。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动sshd.service</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl start sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 停止sshd.service</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl stop sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置sshd.service开机自启</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl <span class="built_in">enable</span> sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 关闭sshd.service开机自启</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl <span class="built_in">disable</span> sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看sshd.service的状态</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl status sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 重新启动sshd.service</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl restart sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 重新加载sshd.service的配置</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl reload sshd.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 杀死sshd.service及其所有创建出来的子进程</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl <span class="built_in">kill</span> sshd.service</span></span><br></pre></td></tr></table></figure>
+
+<p>systemctl控制unit的能力相当于SysV init中的service和chkconfig命令的结合。</p>
+<h3 id="hostnamectl"><a href="#hostnamectl" class="headerlink" title="hostnamectl"></a>hostnamectl</h3><p>该工具用于查看主机信息和设置主机名称等。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 显示主机信息</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> hostnamectl</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置主机名称</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo hostnamectl set-hostname newhostname</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="timedatectl"><a href="#timedatectl" class="headerlink" title="timedatectl"></a>timedatectl</h3><p>查看时间和时区或设置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看当前时间时区以及相关设置</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> timedatectl</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 显示所有可用的时区</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> timedatectl list-timezones</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置时间和时区</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo timedatectl set-timezone America/New_York</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo timedatectl set-time YYYY-MM-DD</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo timedatectl set-time HH:MM:SS</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="其他工具"><a href="#其他工具" class="headerlink" title="其他工具"></a>其他工具</h3><ol>
+<li><p>systemd-analyze: 分析系统启动时间</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> systemd-analyze</span></span><br><span class="line">Startup finished in 4.727s (kernel) + 4.250s (initrd) + 19.860s (userspace) = 28.838s</span><br><span class="line">graphical.target reached after 19.833s in userspace</span><br></pre></td></tr></table></figure></li>
+<li><p>loginctl: 查看登录信息；</p>
+</li>
+<li><p>localectl: 查看和设置本地化配置；</p>
+</li>
+<li><p>systemd-run: 将任何命令封装成一个systemd可以管理的对象；</p>
+</li>
+<li><p>systemd-nspawn和machinectl: 控制 systemd 虚拟机与容器注册管理器。</p>
+</li>
+</ol>
+<h2 id="核心对象Unit"><a href="#核心对象Unit" class="headerlink" title="核心对象Unit"></a>核心对象Unit</h2><p>正如前面所说，systemd管理系统资源的方式是unit对象。unit又分为以下11种类型：</p>
+<ul>
+<li>service: 服务，即需要在后台运行的程序，可以启动、停止和重启等；</li>
+<li>socket: 支持AF_UNIX/AF_INET4/AF_INET6的socket资源，实现基于socket触发的服务；</li>
+<li>device: 管理/dev下的设备，可以定义设备之间的依赖关系；</li>
+<li>mount: 定义挂载点，可以替代/etc/fstab;</li>
+<li>automount: 用于控制自动挂载文件系统，相当于 SysV-init 的 autofs 服务;</li>
+<li>swap: 定义一个用户做虚拟内存的交换分区;</li>
+<li>target: 用于对 Unit 文件进行逻辑分组，引导其它 Unit 的执行。</li>
+<li>path: 定义基于文件路径的服务，可以基于path是否存在启动服务；</li>
+<li>timer: 定时触发任务，可以替代crontab计划任务；</li>
+<li>snapshot: 创建当前系统的运行快照，用于恢复；</li>
+<li>slice和scope通常不是用户创建的，用来管理系统的分组信息等。</li>
+</ul>
+<h3 id="修改unit"><a href="#修改unit" class="headerlink" title="修改unit"></a>修改unit</h3><p>如果要对已经存在unit进行修改，比如修改启动参数等，使用<code>systemctl edit httpd.service</code>命令。</p>
+<p>unit文件通常存储在/lib/systemd/system/目录下，但是执行systemctl edit会在/etc/systemd/system/httpd.service.d/override.conf文件中添加修改的内容。所有override.conf内容会被追加到httpd.service中。</p>
+<p>使用<code>systemctl edit --full</code>会在/etc/systemd/system目录中创建一个全新的unit文件完整替换对应的unit。</p>
+<h3 id="创建unit"><a href="#创建unit" class="headerlink" title="创建unit"></a>创建unit</h3><p>当需要自定义unit时，需要在/etc/systemd/system中创建unit文件。以sleep.service为例&gt;</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> sudo touch /etc/systemd/system/sleep.service</span></span><br></pre></td></tr></table></figure>
+
+<p>sleep.service文件格式类似于<code>.desktop</code>，也类似与ini格式配置文件。</p>
+<p>分为[Unit]、[Service]、[Install]三段。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span>   <span class="comment"># Unit提供service的基本信息</span></span><br><span class="line"><span class="attr">Description</span>=Sleep infinity  <span class="comment"># 描述</span></span><br><span class="line"><span class="attr">After</span>=foo.service <span class="comment"># 定义和其他unit之间依赖关系</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span> <span class="comment"># 定义service的控制信息</span></span><br><span class="line"><span class="attr">Type</span>=simple  <span class="comment"># simple表示无特殊启动方式</span></span><br><span class="line"><span class="attr">ExecStart</span>=/usr/bin/sleep infinity <span class="comment"># 执行systemctl start需要执行的命令</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span> <span class="comment"># 表示unit随系统启动的方式</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target  <span class="comment"># 执行systemctl enable时会在multi-user.target.wants/中链接到本unit</span></span><br></pre></td></tr></table></figure>
+
+<p>其他配置项目可以参考systemd的manual：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> man systemd.unit</span></span><br></pre></td></tr></table></figure>
+
+<p>SysV-init使用shell语言编写启动脚本，脚本中充斥了大量的sed、awk等命令，导致系统启动过程中大量进程执行一小段时间就退出，造成了进程切换的代价。同时shell语法门槛较高，编写复杂。</p>
+<p>systemd设计了一套基于key-value的配置文件的方式实现了服务的管理，相比于SysV-init大大降低了配置的复杂程度。</p>
+<h3 id="Target"><a href="#Target" class="headerlink" title="Target"></a>Target</h3><p>Target就是一组unit，启动一个target就是启动该target包含的所有unit。</p>
+<p>在systemd中target对应的是SysV init中的运行级别runlevel。</p>
+<table>
+<thead>
+<tr>
+<th>Runlevel</th>
+<th>systemd Target</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>poweroff.target</td>
+<td>关闭系统</td>
+</tr>
+<tr>
+<td>1</td>
+<td>rescue.target</td>
+<td>单用户模式</td>
+</tr>
+<tr>
+<td>2,4</td>
+<td>multi-user.target</td>
+<td>自定义运行级别，默认同runlevel3</td>
+</tr>
+<tr>
+<td>3</td>
+<td>multi-user.target</td>
+<td>无图形化、多用户运行级别</td>
+</tr>
+<tr>
+<td>5</td>
+<td>graphical.target</td>
+<td>图形化多用户运行级别</td>
+</tr>
+<tr>
+<td>6</td>
+<td>reboot.target</td>
+<td>重启</td>
+</tr>
+</tbody></table>
+<p>设置系统默认的Target：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看默认启动target</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo systemctl get-default</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置默认启动Target</span></span><br><span class="line"><span class="meta">$</span><span class="bash">sudo systemctl set-default multi-user.target</span></span><br></pre></td></tr></table></figure>
+
+<p>systemd也兼容了SysV init的开机启动脚本，在/etc/rc.d/中的init脚本也会被翻译成systemd的unit开机启动。</p>
+<h3 id="日志管理journalctl"><a href="#日志管理journalctl" class="headerlink" title="日志管理journalctl"></a>日志管理journalctl</h3><p>systemd通过标准组件journald将服务的日志信息存储在二进制文件中，并提供了journalctl工具用于查看日志。二进制的日志文件拥有防止被篡改的特性，因此安全性很高。</p>
+<p>journald的配置文件路径：/etc/systemd/journald.conf</p>
+<p>下面介绍几个journalctl常用的命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看所有日志（默认情况下 ，只保存本次启动的日志）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看内核日志（不显示应用日志）：--dmesg 或 -k</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -k</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看系统本次启动的日志（其中包括了内核日志和各类系统服务的控制台输出）：--system 或 -b</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -b</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -b -0</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看上一次启动的日志（需更改设置）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -b -1</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看指定服务的日志：--unit 或 -u</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -u docker.servcie</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看指定服务的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl /usr/lib/systemd/systemd</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看指定时间的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --since=<span class="string">&quot;2012-10-30 18:17:16&quot;</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --since <span class="string">&quot;20 min ago&quot;</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --since yesterday</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --since <span class="string">&quot;2015-01-10&quot;</span> --until <span class="string">&quot;2015-01-11 03:00&quot;</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --since 09:00 --until <span class="string">&quot;1 hour ago&quot;</span></span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 显示尾部的最新 10 行日志：--lines 或 -n</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -n</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 显示尾部指定行数的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -n 20</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 将最新的日志显示在前面</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -r -u docker.service</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 改变输出的格式：--output 或 -o</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -r -u docker.service -o json-pretty</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看指定进程的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl _PID=1</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看某个路径的脚本的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl /usr/bin/bash</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看指定用户的日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl _UID=33 --since today</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 日志默认分页输出，--no-pager 改为正常的标准输出</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --no-pager</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 以 JSON 格式（单行）输出</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -b -u nginx.service -o json</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 以 JSON 格式（多行）输出，可读性更好</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl -b -u nginx.serviceqq -o json-pretty</span></span><br></pre></td></tr></table></figure>
+
+<p>journalctl还具备日志管理功能：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 显示日志占据的硬盘空间</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --disk-usage</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 指定日志文件占据的最大空间</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --vacuum-size=1G</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 指定日志文件保存多久</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo journalctl --vacuum-time=1years</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="设计思想"><a href="#设计思想" class="headerlink" title="设计思想"></a>设计思想</h2><p>systemd能获得主流发行版青睐一定有其它程序无法比拟的优势。根据systemd作者的介绍，这里尝试总结一下systemd的设计思想。</p>
+<h3 id="并行启动和按需激活"><a href="#并行启动和按需激活" class="headerlink" title="并行启动和按需激活"></a>并行启动和按需激活</h3><p>systemd作者认为SysV-init启动效率低下的原因是启动顺序串行并且启动了过多的服务。要想提高效率有两个方法：</p>
+<ol>
+<li>启动更少的项目</li>
+<li>将串行的方式改成并行</li>
+</ol>
+<p>先说第二点，SysV-init的启动项是串行执行的。启动脚本存放在/etc/rc.d/rc3.d/中，例如S10network。启动脚本前的数字表示启动顺序，数字越大表示启动顺序越靠后。串行启动的好处是启动项之间的依赖关系很容易梳理，但是启动过程计算任务和IO任务也是串行执行，导致cpu或者io的效率没有最大化。</p>
+<p>而systemd采用了并行启动。要想实现并行启动，需要解决的是daemon之间的依赖关系问题。针对传统daemon程序，它们主要等待服务准备socket。因此，只要能将socket提前建立好，daemon之间的依赖关系就解决了。在systemd中，由systemd首先创建daemon所需的socket，当依赖该socket服务启动时，socket已经建立完成所以可以继续程序中执行逻辑。而当socket上有数据到达时，systemd便会将socket文件句柄和socket上的数据转交给daemon程序的服务端。</p>
+<p><img src="1_sysvinit.png" alt="sysvinit的启动方式"></p>
+<p><img src="2_systemd.png" alt="systemd的启动方式"></p>
+<p>同样的机制下，便可以实现按需启动。以sshd服务为例，对于很多设备的sshd服务只有当远程连接请求到达时才需要激活，否则大量的时间都是在无效占用资源。所以可以由systemd创建监听22端口的socket，当有真实连接请求到达时再将socket句柄和连接请求数据转移给sshd服务进行处理，这就是按需启动。</p>
+<p>对于使用D-Bus的进程来说也是一样，Dbus实现hook机制实现第一次访问时加载服务。</p>
+<p>对于开机过程中涉及到文件系统的任务也可以实现并行化。Linux操作系统启动过程中会执行fsck、mount等操作，耗时较长，依赖文件系统的daemon进程需要等待上述操作完成后才能启动。systemd使用autofs的方式解决了文件系统的依赖，在fs准备就绪之前会systemd挂载autofs。从需要文件系统的daemon进程来看，所需要的path已经就绪，因此可以继续运行，一旦需要读写文件，systemd在收到请求会阻塞直到真实文件就绪后再返回，因此实现了并行启动。</p>
+<h3 id="基于CGroup的服务管理"><a href="#基于CGroup的服务管理" class="headerlink" title="基于CGroup的服务管理"></a>基于CGroup的服务管理</h3><p>在Linux中使用两次fork可以让孙子进程和父进程脱离父子关系。如果服务启动了很多子进程，而子进程又启动了很多其他子进程，那么这些孙子进程就脱离了服务的控制范围。在systemd中使用了CGroup实现了服务的分组管理，将服务所有的孙子进程都加入到同一个组中进行管理，解决了该问题。</p>
+<p>CGroup同时也是系统资源管理的基石，因此systemd利用CGroup也可以实现unit的精细化管理。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://0pointer.net/blog/projects/systemd.html">&lt;Rethinking PID 1&gt;</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.fedoraproject.org/en-US/quick-docs/understanding-and-administering-systemd/index.html">Understanding and administering systemd :: Fedora Docs (fedoraproject.org)</a></li>
+<li>SysV init切换成systemd的命令速记表：<a target="_blank" rel="noopener" href="https://fedoraproject.org/wiki/SysVinit_to_Systemd_Cheatsheet">SysVinit to Systemd Cheatsheet - Fedora Project Wiki</a></li>
+</ol>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://weiping1992.github.io/2022/03/26/%E5%88%9D%E8%AF%86systemd/" title="初识systemd" target="_blank" rel="external">https://weiping1992.github.io/2022/03/26/初识systemd/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/weiping1992" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar_mario.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/weiping1992" target="_blank"><span class="text-dark">渭平</span><small class="ml-1x">正在学炒股的咖啡爱好者</small></a></h3>
+        <div>Keep looking and don&#39;t settle</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2022/03/13/%E8%AF%BB%E3%80%8A%E7%BD%AE%E8%BA%AB%E4%BA%8B%E5%86%85%E3%80%8B/" title="读《置身事内》"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat" data-mobile-sites="weibo,qq,wechat"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/weiping1992" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+<script src="//cdn.jsdelivr.net/npm/gitment@0.0.3/dist/gitment.browser.min.js"></script>
+<script>
+var gitment = new Gitment({
+  // id默认为当前页面url，如果url后带参数或锚点，gitment要重新初始化
+  // https://github.com/imsun/gitment/issues/55
+  // 解决方案：id:window.location.pathname,或者将id设置为当前页面标题
+  id: '初识systemd', 
+  owner: 'weiping1992', // 可以是你的GitHub用户名，也可以是github id
+  repo: 'https://github.com/Weiping1992/Weiping1992.github.io',
+  oauth: {
+    client_id: '7928167b058eb23cc963',
+    client_secret: 'dd9e26d0f6aef6847c805427663c8eeb261a889f',
+  }
+})
+gitment.render('comments')
+</script>
+
+
+
+
+
+
+
+
+
+</body>
+</html>
