@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>【Manjaro】从KDE切换到i3-gaps | 渭平&#39;s Blog</title>
+  <meta name="description" content="i3 is Window Manager也许你会经常看到DE和WM这两个词。DE是桌面环境，在Linux系统中主流的有KDE、GNOME和XFCE。而WM指的是窗口管理器，常见的有i3wm、bspwm、dwm、awesome等等。相比于WM，DE更加系统，不仅拥有窗口管理能力，还自带一整套软件，例如终端软件、界面配置软件，让桌面环境更加易用。但是与之而来就是拥有更大的性能开销。 i3wm是一个平铺">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Manjaro】从KDE切换到i3-gaps">
+<meta property="og:url" content="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/index.html">
+<meta property="og:site_name" content="做大梦的程二千">
+<meta property="og:description" content="i3 is Window Manager也许你会经常看到DE和WM这两个词。DE是桌面环境，在Linux系统中主流的有KDE、GNOME和XFCE。而WM指的是窗口管理器，常见的有i3wm、bspwm、dwm、awesome等等。相比于WM，DE更加系统，不仅拥有窗口管理能力，还自带一整套软件，例如终端软件、界面配置软件，让桌面环境更加易用。但是与之而来就是拥有更大的性能开销。 i3wm是一个平铺">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/i3-gaps%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C.png">
+<meta property="og:image" content="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/%E9%85%8D%E7%BD%AE%E7%BD%91%E7%BB%9C.png">
+<meta property="og:image" content="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/%E5%9B%BE%E6%A0%87%E5%8A%A8%E4%BD%9C.png">
+<meta property="article:published_time" content="2022-04-10T10:04:48.000Z">
+<meta property="article:modified_time" content="2022-04-10T10:14:24.098Z">
+<meta property="article:author" content="程二千">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="i3-gaps">
+<meta property="article:tag" content="折腾">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/i3-gaps%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="做大梦的程二千" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitment@0.0.3/style/default.min.css">
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/weiping1992" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar_mario.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">渭平</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">正在学炒股的咖啡爱好者</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Nanjing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/weiping1992" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>只有坚持才能看到希望，而不是看到希望才去坚持！</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8D%9A%E5%AE%A2/">博客</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%98%85%E8%AF%BB/">阅读</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/i3-gaps/" rel="tag">i3-gaps</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag">博客</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%98%E8%85%BE/" rel="tag">折腾</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Linux/" style="font-size: 14px;">Linux</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/i3-gaps/" style="font-size: 13px;">i3-gaps</a> <a href="/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 13px;">博客</a> <a href="/tags/%E6%8A%98%E8%85%BE/" style="font-size: 13px;">折腾</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13px;">读书</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/03/">三月 2022</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled ">
+        
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/Linux/">Linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/" class="title">【Manjaro】从KDE切换到i3-gaps</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-10T10:04:48.000Z" itemprop="datePublished">2022-04-10</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/03/27/hexo%E7%94%A8%E6%B3%95%E6%95%B4%E7%90%86/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E5%8D%9A%E5%AE%A2/">博客</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/03/27/hexo%E7%94%A8%E6%B3%95%E6%95%B4%E7%90%86/" class="title">hexo用法整理</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-03-27T08:36:05.000Z" itemprop="datePublished">2022-03-27</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/Linux/">Linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/03/26/%E5%88%9D%E8%AF%86systemd/" class="title">初识systemd</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-03-26T12:20:28.000Z" itemprop="datePublished">2022-03-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-thumb">
+              <a href="/2022/03/13/%E8%AF%BB%E3%80%8A%E7%BD%AE%E8%BA%AB%E4%BA%8B%E5%86%85%E3%80%8B/" class="thumb">
+    
+    
+        <span class="thumb-image thumb-none"></span>
+    
+</a>
+
+            </div>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E9%98%85%E8%AF%BB/">阅读</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/03/13/%E8%AF%BB%E3%80%8A%E7%BD%AE%E8%BA%AB%E4%BA%8B%E5%86%85%E3%80%8B/" class="title">读《置身事内》</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-03-13T13:22:42.000Z" itemprop="datePublished">2022-03-13</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-【Manjaro】从KDE切换到i3-gaps" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      【Manjaro】从KDE切换到i3-gaps
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/" class="article-date">
+	  <time datetime="2022-04-10T10:04:48.000Z" itemprop="datePublished">2022-04-10</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/Linux/">Linux</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/Linux/" rel="tag">Linux</a>, <a class="article-tag-link-link" href="/tags/i3-gaps/" rel="tag">i3-gaps</a>, <a class="article-tag-link-link" href="/tags/%E6%8A%98%E8%85%BE/" rel="tag">折腾</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 2.1k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 8(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="i3-is-Window-Manager"><a href="#i3-is-Window-Manager" class="headerlink" title="i3 is Window Manager"></a>i3 is Window Manager</h2><p>也许你会经常看到DE和WM这两个词。DE是桌面环境，在Linux系统中主流的有KDE、GNOME和XFCE。而WM指的是窗口管理器，常见的有i3wm、bspwm、dwm、awesome等等。相比于WM，DE更加系统，不仅拥有窗口管理能力，还自带一整套软件，例如终端软件、界面配置软件，让桌面环境更加易用。但是与之而来就是拥有更大的性能开销。</p>
+<p>i3wm是一个平铺式窗口管理器。相比于层叠式窗口，在i3中所有窗口都是平铺在显示器中的，可以使用快捷键实现窗口间的来回跳跃，避免鼠标的介入，因此带来了更高的效率。但是相比于DE，i3wm的配置相对而言会更加复杂一些。</p>
+<p>之前我的Manjaro安装的是KDE版本，为了折腾将KDE切换到i3-gaps。i3-gaps是i3wm的一个分支，可以实现窗口间的间距。</p>
+<p>最终的效果如下：</p>
+<p><img src="i3-gaps%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C.png" alt="最终效果"></p>
+<h2 id="安装过程"><a href="#安装过程" class="headerlink" title="安装过程"></a>安装过程</h2><p>Manjaro中安装i3-gaps很简单，使用如下几条命令即可：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S linux-headers [选择uranme -r对应的版本]</span></span><br><span class="line"><span class="meta">$</span><span class="bash">yay -S i3-gaps <span class="comment">#[AUR]</span></span></span><br></pre></td></tr></table></figure>
+
+<p>仅安装i3-gaps还不够。在i3的世界中还需要一个bar来展示一些信息和一个程序启动器。这里bar暂时选用i3status（后面会介绍替代者polybar）和dmenu。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S i3status</span></span><br><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S dmenu</span></span><br></pre></td></tr></table></figure>
+
+<p>这样在注销后，在登录界面就会看到左下角可以选择进入的桌面。</p>
+<h2 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h2><p>第一次进入i3桌面，会自动生成i3的配置文件，这里选择Yes。<code>Mod键</code>使用<code>Alt键</code>（你也可以使用<code>Win键</code>）。生成的配置文件在<code>~/.config/i3/config</code>。</p>
+<p>黑黢黢的桌面是因为还没有配置桌面壁纸，后面会介绍。先简单介绍一下i3的使用方法。</p>
+<h3 id="1-打开终端：-Mod-Enter键"><a href="#1-打开终端：-Mod-Enter键" class="headerlink" title="1.打开终端： $Mod + Enter键"></a>1.打开终端： $Mod + Enter键</h3><p>这里的<code>$Mod键</code>就是之前步骤设置的<code>Alt键</code>。</p>
+<p>如果你按下<code>$Mod + Enter</code>键之后没有弹出任何终端软件，有可能是还未安装i3支持的终端软件。支持的终端软件列表：<a target="_blank" rel="noopener" href="https://man.archlinux.org/man/i3-sensible-terminal.1">i3-sensible-terminal</a>。</p>
+<p>由于我是从KDE切换过来的，已经安装了konsole，所以不存在这个问题。</p>
+<h3 id="2-使用dmenu打开软件：-Mod-D"><a href="#2-使用dmenu打开软件：-Mod-D" class="headerlink" title="2. 使用dmenu打开软件：$Mod + D"></a>2. 使用dmenu打开软件：$Mod + D</h3><p>按下之后会在顶部出现一个可输入的显示条，输入firefox后按下Enter就打开了firefox软件。</p>
+<h3 id="3-切换窗口：-Mod-方向键"><a href="#3-切换窗口：-Mod-方向键" class="headerlink" title="3.切换窗口： $Mod + 方向键"></a>3.切换窗口： $Mod + 方向键</h3><p>如果界面上已经打开了多个窗口，要在窗口键来回切换就使用<code>$Mod + 方向键</code>。</p>
+<h3 id="4-切换工作区：-Mod-数字键"><a href="#4-切换工作区：-Mod-数字键" class="headerlink" title="4.切换工作区： $Mod + 数字键"></a>4.切换工作区： $Mod + 数字键</h3><p>类似KDE中一样，i3也支持多个Workspace。在workspace中切换使用<code>$Mod +  数字键（例如1,2...）</code></p>
+<p>以上只是最基本的用法，详细的使用方法参考<a target="_blank" rel="noopener" href="https://i3wm.org/docs/userguide.html">官方手册</a>。</p>
+<h2 id="配置i3"><a href="#配置i3" class="headerlink" title="配置i3"></a>配置i3</h2><p>本小节主要介绍如何让i3使用起来更方便。</p>
+<h3 id="1-解决wifi自动连接的问题-NetworkManager"><a href="#1-解决wifi自动连接的问题-NetworkManager" class="headerlink" title="1. 解决wifi自动连接的问题(NetworkManager)"></a>1. 解决wifi自动连接的问题(NetworkManager)</h3><p>在KDE桌面环境中，我的Manjaro可以自动连到wifi网络，但是切换到i3wm中却发现无网络可用。使用命令<code>systemctl status NetworkManager</code>查看信息发现是NetworkManager连接到无线网络时无法输入密码。于是需要安装如下软件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 托盘图标</span></span><br><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S network-manager-applet</span></span><br></pre></td></tr></table></figure>
+
+<p>安装完成之后，重新进入i3wm就出现提示输入wifi密码。</p>
+<p>但是每次进入i3wm都要输入wifi密码也很麻烦，于是就需要安装下面这个程序：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S nm-connection-editor</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 打开nm-connection-editor</span></span><br><span class="line"><span class="meta">$</span><span class="bash">nm-connection-editor</span></span><br></pre></td></tr></table></figure>
+
+<p>在连接wifi输入密码时选择旁边的这个记住密码选项<code>为所有人记住密码</code>，于是重新登录i3wm就可以发现wifi已经自动连接。</p>
+<p><img src="%E9%85%8D%E7%BD%AE%E7%BD%91%E7%BB%9C.png" alt="配置网络"></p>
+<h3 id="2-解决中文输入法的问题"><a href="#2-解决中文输入法的问题" class="headerlink" title="2.解决中文输入法的问题"></a>2.解决中文输入法的问题</h3><p>在KDE下安装了fcitx作为中文输入法，但是切换到i3wm中却发现无法切换出中文输入法。需要修改i3wm的配置文件，让fcitx5随i3启动：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> vim ~/.config/i3/config</span></span><br><span class="line">...</span><br><span class="line">exec --no-startup-id fcitx5</span><br></pre></td></tr></table></figure>
+
+<p>然后保存配置文件，并重新进入i3桌面即可使用中文输入法。</p>
+<p>如果你的系统中没有中文输入法，请参考这篇文章安装fcitx5和对应的输入法程序即可。安装完成之后，别忘了修改i3wm的配置文件让输入法启动哦～</p>
+<h3 id="3-关闭笔记本显示器"><a href="#3-关闭笔记本显示器" class="headerlink" title="3. 关闭笔记本显示器"></a>3. 关闭笔记本显示器</h3><p>因为我的使用方式是笔记本电脑外接显示器使用。一般情况下我会将笔记本合盖，仅使用外接显示器（因为外接显示器的屏幕更大）。在KDE的环境中，一切工作正常，但是切换到i3wm中，合盖却无法关闭笔记本的屏幕。</p>
+<p>查询资料，基本推荐的是修改/etc/systemd/logind.conf配置文件中的HandleLidSwitchDocked=ignore选项，但是场景都是合盖休眠。这里我选择使用临时的解决方法：用<code>xrandr</code>命令强制关闭笔记本显示器。在i3配置文件<code>~/.conifg/i3/config</code>的最后加上</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exec --no-startup-id xrandr --output eDP-1 --off</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>eDP-1</code>就是笔记本显示器的名称。如果你还不知道你的显示器名称，可以使用<code>xrandr</code>命令查看。</p>
+<p>这样带来的问题是如果笔记本没有外接显示器，在进入i3桌面之后也会被关闭显示器，导致无法使用。我暂时没有移动笔记本的需求，如果遇到了也可以切换到KDE使用，所以这个问题对我来说可以克服。（主要是懒得写复杂一点的shell脚本）</p>
+<h3 id="4-使用feh设置桌面背景"><a href="#4-使用feh设置桌面背景" class="headerlink" title="4. 使用feh设置桌面背景"></a>4. 使用feh设置桌面背景</h3><p>先安装feh：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">sudo pacman -S feh</span></span><br></pre></td></tr></table></figure>
+
+<p>在i3的配置文件<code>~/.config/i3/config</code>末尾追加:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exec --no-startup-id feh --random --bg-fill ~/Pictures/Wallpapers</span><br></pre></td></tr></table></figure>
+
+<p>这句命令是随即选择<code>~/Pictures/Wallpapers</code>中的图片作为背景，多个Workspace可能会用不同的图片。</p>
+<p>如果向设置特定图片使用下面这句：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exec --no-startup-id feh --bg-fill ~/Pictures/Wallpapers/img-8e2c27a1a7510d3b73317e96ec2f4b72.jpg</span><br></pre></td></tr></table></figure>
+
+<p>重新进入i3，可以看到效果。</p>
+<h3 id="5-使用polybar代替i3status"><a href="#5-使用polybar代替i3status" class="headerlink" title="5. 使用polybar代替i3status"></a>5. 使用polybar代替i3status</h3><p>i3status比较简单，可玩性不高。如果你希望拥有更加美观的bar就来使用polybar吧。</p>
+<p>polybar是在AUR库中，使用yay命令进行安装。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">yay -S polybar</span></span><br></pre></td></tr></table></figure>
+
+<p>polybar的配置相对比较复杂，可以推荐使用github上的polybar主题工具<a target="_blank" rel="noopener" href="https://github.com/adi1090x/polybar-themes">polybar-themes</a>。</p>
+<p>安装主题也很简单：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git <span class="built_in">clone</span> --depth=1 https://github.com/adi1090x/polybar-themes.git</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> <span class="built_in">cd</span> polybar-themes</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> chmod +x setup.sh</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ./setup.sh</span></span><br><span class="line"></span><br><span class="line">[*] Installing Polybar Themes...</span><br><span class="line"></span><br><span class="line">[*] Choose Style -</span><br><span class="line">[1] Simple</span><br><span class="line">[2] Bitmap</span><br><span class="line"></span><br><span class="line">[?] Select Option : 1</span><br><span class="line"></span><br><span class="line">[*] Installing fonts...</span><br><span class="line">[*] Creating a backup of your polybar configs...</span><br><span class="line">[*] Successfully Installed.</span><br></pre></td></tr></table></figure>
+
+<p>polybar-themes中含有多个主题可以使用，这里使用material为例，其他主题类似。主题安装之后的配置文件路径在<code>~/.config/polybar</code>下，material主题的配置在<code>~/.config/polybar/material</code>中。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> bash ~/.config/polybar/launch.sh --material</span></span><br></pre></td></tr></table></figure>
+
+<p>但是启动之后发现有一些报错信息，这里我们处理一下：</p>
+<ol>
+<li><p>字体和图标安装，参考：<a target="_blank" rel="noopener" href="https://github.com/adi1090x/polybar-themes/blob/master/README.md#material">https://github.com/adi1090x/polybar-themes/blob/master/README.md#material</a></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> yay -S ttf-material-icons-git nerd-fonts-fantasque-sans-mono</span></span><br></pre></td></tr></table></figure></li>
+<li><p>修改<code>～/.config/polybar/material</code>中的bar.ini和modules.ini文件，将mpd相关配置项注释掉。</p>
+<p>由于我没有安装mpd（一个音乐播放软件），所以bar中显示音乐播放的插件我也不需要，因此在这两个配置文件中将<code>module/mpd_bar</code>和<code>module/mpd</code>用<code>;</code>注释。</p>
+</li>
+<li><p>修复battery显示错误的问题：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 使用命令查看电池和电源适配器的名称</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ls -l /sys/class/power_supply/</span></span><br><span class="line">ADP1</span><br><span class="line">BAT0</span><br></pre></td></tr></table></figure>
+
+<p>修改modules.ini中的<code>[module/battery]</code>中battery和adapter后的名称。</p>
+</li>
+<li><p>修复wifi显示问题：</p>
+<p>使用ifoconfig查看自己的无线网卡名称</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ifconfig</span></span><br><span class="line">...</span><br><span class="line">wlp2s0: ...</span><br><span class="line">		...</span><br></pre></td></tr></table></figure>
+
+<p>修改modules.ini中的<code>[module/network]</code>和<code>[network/wireless-network]</code>中的inferface字段修改成自己的无线网卡名称<code>wlp2s0</code>。</p>
+</li>
+<li><p>修复图标点击动作</p>
+<p><img src="%E5%9B%BE%E6%A0%87%E5%8A%A8%E4%BD%9C.png" alt="图标动作"></p>
+<p>这几个图标在<code>user_modules.ini</code>中。左边第一个是打开终端软件图标：</p>
+<p>修改<code>[module/term]</code>中click-left字段为konsole</p>
+<p>其他图标类似。</p>
+</li>
+<li><p>由于自带的bar可能和壁纸的颜色不匹配，可以使用主题自带的脚本实现壁纸自动取色并修改。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bash ~/.config/polybar/material/scripts/pywal.sh ~/Pictures/Wallpapers/img-8</span><br><span class="line">e2c27a1a7510d3b73317e96ec2f4b72.jpg</span><br></pre></td></tr></table></figure>
+
+<p>重新启动polybar看看效果吧。</p>
+</li>
+</ol>
+<h3 id="6-将i3修改成无窗口标题模式"><a href="#6-将i3修改成无窗口标题模式" class="headerlink" title="6.将i3修改成无窗口标题模式"></a>6.将i3修改成无窗口标题模式</h3><p>在i3的配置文件<code>~/.config/i3/config</code>中添加如下命令 ：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">for_window [class=&quot;^^.*&quot;] border pixel 1</span><br></pre></td></tr></table></figure>
+
+<p>快去试试你的i3吧，后续我会深入使用i3wm，然后不定期分享一点美化和使用技巧～</p>
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://i3wm.org/">i3的官方网站</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/I3_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">archwiki</a></li>
+</ol>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://weiping1992.github.io/2022/04/10/%E3%80%90Manjaro%E3%80%91%E4%BB%8EKDE%E5%88%87%E6%8D%A2%E5%88%B0i3-gaps/" title="【Manjaro】从KDE切换到i3-gaps" target="_blank" rel="external">https://weiping1992.github.io/2022/04/10/【Manjaro】从KDE切换到i3-gaps/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/weiping1992" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar_mario.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/weiping1992" target="_blank"><span class="text-dark">渭平</span><small class="ml-1x">正在学炒股的咖啡爱好者</small></a></h3>
+        <div>Keep looking and don&#39;t settle</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2022/03/27/hexo%E7%94%A8%E6%B3%95%E6%95%B4%E7%90%86/" title="hexo用法整理"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat" data-mobile-sites="weibo,qq,wechat"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/weiping1992" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+<script src="//cdn.jsdelivr.net/npm/gitment@0.0.3/dist/gitment.browser.min.js"></script>
+<script>
+var gitment = new Gitment({
+  // id默认为当前页面url，如果url后带参数或锚点，gitment要重新初始化
+  // https://github.com/imsun/gitment/issues/55
+  // 解决方案：id:window.location.pathname,或者将id设置为当前页面标题
+  id: '【Manjaro】从KDE切换到i3-gaps', 
+  owner: 'weiping1992', // 可以是你的GitHub用户名，也可以是github id
+  repo: 'https://github.com/Weiping1992/Weiping1992.github.io',
+  oauth: {
+    client_id: '7928167b058eb23cc963',
+    client_secret: 'dd9e26d0f6aef6847c805427663c8eeb261a889f',
+  }
+})
+gitment.render('comments')
+</script>
+
+
+
+
+
+
+
+
+
+</body>
+</html>
